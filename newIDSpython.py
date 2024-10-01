@@ -247,6 +247,7 @@ def detect_dir_traversal(packet):
                         save_log(log_msg)
                         break  # Detener búsqueda si se detecta un patrón
 
+
 #Detectar fuerza bruta en panel de autenticacion:
 # Función para leer la URL de un archivo de texto
 def read_login_url_from_file(filename):
