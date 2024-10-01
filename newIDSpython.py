@@ -220,8 +220,8 @@ def detect_dir_traversal(packet):
         except UnicodeDecodeError:
             return  # Si no se puede decodificar, saltar el paquete
 
-        # Solo analizar si es una solicitud HTTP (puerto 80 o 443)
-        if packet[TCP].dport == 80 or packet[TCP].dport == 5000 or packet[TCP].sport == 80:
+        # Solo analizar si es una solicitud HTTP (puerto 80, 5000 o tráfico HTTPS en 443)
+        if packet[TCP].dport in [80, 5000] or packet[TCP].sport == 80:
             # Decodificar el contenido para obtener la URL si es GET
             if payload.startswith("GET"):
                 decoded_payload = unquote(payload)  # Decodificar la URL para analizar
@@ -232,14 +232,13 @@ def detect_dir_traversal(packet):
                         src_ip = packet[IP].src
                         log_msg = f"Posible reconocimiento de directorios detectado desde {src_ip} en la URL: {decoded_payload}"
                         print(log_msg)
-                        save_log(log_msg) 
+                        save_log(log_msg)
                         break  # Rompe si detecta el patrón para no seguir buscando
 
-                        # Buscar en solicitudes POST (los datos están en el cuerpo de la solicitud)
-            elif decoded_payload.startswith("POST"):
+            # Buscar en solicitudes POST (los datos están en el cuerpo de la solicitud)
+            elif payload.startswith("POST"):
                 # El cuerpo del POST generalmente está después de los encabezados HTTP
-                # Buscamos las partes después de los encabezados
-                post_body = decoded_payload.split("\r\n\r\n", 1)[-1]  # Extraer el cuerpo del POST
+                post_body = payload.split("\r\n\r\n", 1)[-1]  # Extraer el cuerpo del POST
                 for pattern in dir_traversal_patterns:
                     if re.search(pattern, post_body):
                         src_ip = packet[IP].src
